@@ -7,8 +7,8 @@ document.getElementById("search").addEventListener("click", () => {
         return;
     }
 
-    const promise = fetch(`https://api.weatherapi.com/v1/current.json?key=cb6538f8a8fc4df1be492634250201&q=${city}&aqi=yes`);
-    
+    const promise = fetch(`https://cors-anywhere.herokuapp.com/https://api.weatherapi.com/v1/current.json?key=cb6538f8a8fc4df1be492634250201&q=${city}&aqi=yes`);
+
     promise
         .then((response) => response.json())
         .then((data) => {

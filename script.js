@@ -7,7 +7,7 @@ document.getElementById("search").addEventListener("click", () => {
     }
 
     // Step 1: Get coordinates from Nominatim
-    const geoUrl = `https://nominatim.openstreetmap.org/search?city=${city}&format=json`;
+    const geoUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=06d66e5d1c75e158bc86f701a4495487`;
 
     fetch(geoUrl)
         .then((response) => {

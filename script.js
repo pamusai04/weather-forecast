@@ -6,56 +6,53 @@ document.getElementById("search").addEventListener("click", () => {
         return;
     }
 
-    // Create the URL and log it for debugging
-    const url = `https://nominatim.openstreetmap.org/search?city=${city}&format=json`;
-    // console.log("Fetching data from:", url); // Log the URL
+    // Step 1: Get coordinates from Nominatim
+    const geoUrl = `https://nominatim.openstreetmap.org/search?city=${city}&format=json`;
 
-    const promise = fetch(url);
-
-    promise
+    fetch(geoUrl)
         .then((response) => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`Geo lookup failed. Status: ${response.status}`);
             return response.json();
         })
-        .then((data) => {
-            // Handle the data
+        .then((geoData) => {
+            if (geoData.length === 0) throw new Error("City not found.");
+
+            const lat = geoData[0].lat;
+            const lon = geoData[0].lon;
+
+            // Step 2: Get weather data from Open-Meteo
+            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+
+            return fetch(weatherUrl);
+        })
+        .then((response) => {
+            if (!response.ok) throw new Error(`Weather fetch failed. Status: ${response.status}`);
+            return response.json();
+        })
+        .then((weatherData) => {
             let result_container = document.getElementById("result-container");
             result_container.innerHTML = ""; // Clear previous results
-
             document.getElementById('result-container').style.display = "block";
 
-            let img = document.createElement("img");
-            img.src = "https:" + data.current.condition.icon; // Ensure HTTPS
-            img.alt = "Weather Icon";
-            img.className = "icon";
+            const { temperature, windspeed, weathercode } = weatherData.current_weather;
 
-            let location = document.createElement("p");
-            location.innerHTML = `<strong>Location:</strong> ${data.location.name}, ${data.location.country}`;
+            // Optional: Weather code icon (not provided directly by Open-Meteo, you can map it)
+            let icon = document.createElement("p");
+            icon.textContent = `Weather Code: ${weathercode}`;
 
-            let temperature = document.createElement("p");
-            temperature.innerHTML = `<strong>Temperature:</strong> ${data.current.temp_c}°C`;
+            let temp = document.createElement("p");
+            temp.innerHTML = `<strong>Temperature:</strong> ${temperature}°C`;
 
-            let condition = document.createElement("p");
-            condition.innerHTML = `<strong>Condition:</strong> ${data.current.condition.text}`;
+            let wind = document.createElement("p");
+            wind.innerHTML = `<strong>Wind Speed:</strong> ${windspeed} km/h`;
 
-            let humidity = document.createElement("p");
-            humidity.innerHTML = `<strong>Humidity:</strong> ${data.current.humidity}%`;
-
-            let windSpeed = document.createElement("p");
-            windSpeed.innerHTML = `<strong>Wind Speed:</strong> ${data.current.wind_kph} km/h`;
-
-            result_container.appendChild(img);
-            result_container.appendChild(location);
-            result_container.appendChild(condition);
-            result_container.appendChild(temperature);
-            result_container.appendChild(humidity);
-            result_container.appendChild(windSpeed);
+            result_container.appendChild(temp);
+            result_container.appendChild(wind);
+            result_container.appendChild(icon);
         })
         .catch((error) => {
             document.getElementById('result-container').style.display = "none";
-            console.error("Error fetching data:", error);
-            alert(`Error fetching data: ${error.message}`);
+            console.error("Error:", error);
+            alert(`Error: ${error.message}`);
         });
 });

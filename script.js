@@ -6,7 +6,7 @@ document.getElementById("search").addEventListener("click", () => {
         return;
     }
 
-    // Step 1: Get coordinates from Nominatim
+    // Step 1: Get coordinates from OpenWeatherMap
     const geoUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=06d66e5d1c75e158bc86f701a4495487`;
 
     fetch(geoUrl)
@@ -15,10 +15,8 @@ document.getElementById("search").addEventListener("click", () => {
             return response.json();
         })
         .then((geoData) => {
-            if (geoData.length === 0) throw new Error("City not found.");
-
-            const lat = geoData[0].lat;
-            const lon = geoData[0].lon;
+            const lat = geoData.coord.lat;
+            const lon = geoData.coord.lon;
 
             // Step 2: Get weather data from Open-Meteo
             const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
@@ -36,15 +34,14 @@ document.getElementById("search").addEventListener("click", () => {
 
             const { temperature, windspeed, weathercode } = weatherData.current_weather;
 
-            // Optional: Weather code icon (not provided directly by Open-Meteo, you can map it)
-            let icon = document.createElement("p");
-            icon.textContent = `Weather Code: ${weathercode}`;
-
             let temp = document.createElement("p");
             temp.innerHTML = `<strong>Temperature:</strong> ${temperature}°C`;
 
             let wind = document.createElement("p");
             wind.innerHTML = `<strong>Wind Speed:</strong> ${windspeed} km/h`;
+
+            let icon = document.createElement("p");
+            icon.textContent = `Weather Code: ${weathercode}`;
 
             result_container.appendChild(temp);
             result_container.appendChild(wind);

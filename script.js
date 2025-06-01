@@ -1,55 +1,63 @@
 document.getElementById("search").addEventListener("click", () => {
-    let city = document.getElementById("city").value;
+  const city = document.getElementById("city").value.trim();
 
-    if (!city) {
-        alert("Please enter a city");
-        return;
-    }
+  if (!city) {
+    alert("Please enter a city");
+    return;
+  }
 
-    // Step 1: Get coordinates from OpenWeatherMap
-    const geoUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=06d66e5d1c75e158bc86f701a4495487`;
+  // OpenWeatherMap API URL with your API key
+  const openWeatherKey = "06d66e5d1c75e158bc86f701a4495487";
+  const geoUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${openWeatherKey}&units=metric`;
 
-    fetch(geoUrl)
+  fetch(geoUrl)
+    .then((response) => {
+      if (!response.ok) throw new Error(`City not found or error: ${response.status}`);
+      return response.json();
+    })
+    .then((geoData) => {
+      // Access lat and lon properly
+      if (!geoData.coord) throw new Error("Coordinates not found.");
+
+      const lat = geoData.coord.lat;
+      const lon = geoData.coord.lon;
+
+      // Fetch current weather from Open-Meteo using coordinates
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+
+      return fetch(weatherUrl)
         .then((response) => {
-            if (!response.ok) throw new Error(`Geo lookup failed. Status: ${response.status}`);
-            return response.json();
-        })
-        .then((geoData) => {
-            const lat = geoData.coord.lat;
-            const lon = geoData.coord.lon;
-
-            // Step 2: Get weather data from Open-Meteo
-            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
-
-            return fetch(weatherUrl);
-        })
-        .then((response) => {
-            if (!response.ok) throw new Error(`Weather fetch failed. Status: ${response.status}`);
-            return response.json();
+          if (!response.ok) throw new Error(`Weather fetch failed: ${response.status}`);
+          return response.json();
         })
         .then((weatherData) => {
-            let result_container = document.getElementById("result-container");
-            result_container.innerHTML = ""; // Clear previous results
-            document.getElementById('result-container').style.display = "block";
+          // Show results
+          const container = document.getElementById("result-container");
+          container.style.display = "block";
+          container.innerHTML = ""; // clear previous
 
-            const { temperature, windspeed, weathercode } = weatherData.current_weather;
+          const locationP = document.createElement("p");
+          locationP.innerHTML = `<strong>Location:</strong> ${geoData.name}, ${geoData.sys.country}`;
 
-            let temp = document.createElement("p");
-            temp.innerHTML = `<strong>Temperature:</strong> ${temperature}°C`;
+          const tempP = document.createElement("p");
+          tempP.innerHTML = `<strong>Temperature:</strong> ${weatherData.current_weather.temperature} °C`;
 
-            let wind = document.createElement("p");
-            wind.innerHTML = `<strong>Wind Speed:</strong> ${windspeed} km/h`;
+          const windP = document.createElement("p");
+          windP.innerHTML = `<strong>Wind Speed:</strong> ${weatherData.current_weather.windspeed} km/h`;
 
-            let icon = document.createElement("p");
-            icon.textContent = `Weather Code: ${weathercode}`;
+          const weatherCodeP = document.createElement("p");
+          weatherCodeP.innerHTML = `<strong>Weather Code:</strong> ${weatherData.current_weather.weathercode}`;
 
-            result_container.appendChild(temp);
-            result_container.appendChild(wind);
-            result_container.appendChild(icon);
-        })
-        .catch((error) => {
-            document.getElementById('result-container').style.display = "none";
-            console.error("Error:", error);
-            alert(`Error: ${error.message}`);
+          container.appendChild(locationP);
+          container.appendChild(tempP);
+          container.appendChild(windP);
+          container.appendChild(weatherCodeP);
         });
+    })
+    .catch((error) => {
+      const container = document.getElementById("result-container");
+      container.style.display = "none";
+      console.error("Error:", error);
+      alert(error.message);
+    });
 });

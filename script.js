@@ -7,7 +7,7 @@ document.getElementById("search").addEventListener("click", () => {
     }
 
     // Create the URL and log it for debugging
-    const url = `https://api.weatherapi.com/v1/current.json?key=cb6538f8a8fc4df1be492634250201&q=${city}&aqi=yes`;
+    const url = `https://nominatim.openstreetmap.org/search?city=${city}&format=json`;
     // console.log("Fetching data from:", url); // Log the URL
 
     const promise = fetch(url);
